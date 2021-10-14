@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Classes\PriceHelper;
 use PHPUnit\Framework\TestCase;
 
+// code for testing all functions: php artisan test
 class PriceHelperTest extends TestCase {
     private array $priceTier;
 
