@@ -55,7 +55,56 @@ class PriceHelper
      */
     public static function getTotalPriceTierAtQty(int $qty, array $tiers): float
     {
-        return 0.0;
+        //edge case of when qty is 0, return 0.0
+        if ($qty === 0){
+            return 0.0;
+        }
+
+        $tierUnitPrices = array_values($tiers);
+        $tierMinOrderQty = array_keys($tiers);
+        $numOfTiers = count($tiers);
+        
+        //index 0 represents first tier, index 1 represents second tier, and so on...
+        $totalSum = [];
+        $qtyBoughtSoFar = 0;
+        
+        for ($i = 0; $i < $numOfTiers; $i++) {
+            
+            //exit condition 
+            if ($qtyBoughtSoFar >= $qty){
+                break;
+            }
+            
+            $remainingQty = $qty - $qtyBoughtSoFar;
+            // print("tier ${i} , qtyBoughtSoFar: ${qtyBoughtSoFar}") . PHP_EOL;
+            $currentTierUnitPrice = $tierUnitPrices[$i];
+            
+            //final tier
+            if ($i == $numOfTiers-1){
+                array_push($totalSum, $remainingQty * $currentTierUnitPrice);
+                continue;
+            }
+            
+            // current tier
+            $currentTierMinOrderQty = $tierMinOrderQty[$i+1] - 1;
+            $qtyToBuy = $currentTierMinOrderQty-$qtyBoughtSoFar;
+            
+            // print("qtyToBuy: ${qtyToBuy} , remainingQty ${remainingQty} , currentTierMinOrderQty ${currentTierMinOrderQty}") . PHP_EOL;
+            
+            if ($remainingQty > $qtyToBuy) {
+                array_push($totalSum, $currentTierUnitPrice * $qtyToBuy);
+                $qtyBoughtSoFar += $qtyToBuy;
+            }   
+            
+            else {
+                array_push($totalSum, $remainingQty * $tierUnitPrices[$i]);
+                $qtyBoughtSoFar += $remainingQty;
+            }
+            
+        }
+        
+        $totalSumArr = floatval(array_sum($totalSum));
+        return $totalSumArr;
     }
 
     /**
