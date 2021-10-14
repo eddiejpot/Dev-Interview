@@ -24,7 +24,6 @@ class PriceHelperTest extends TestCase {
     /**
      * @dataProvider unitPriceTier
      */
-    // command to run to test this 
     // code for testing this function: php artisan test --filter testUnitPriceTier
     public function testUnitPriceTier($qty, $expected) : void {
         $this->assertSame($expected, PriceHelper::getUnitPriceTierAtQty($qty, $this->priceTier));
@@ -33,6 +32,7 @@ class PriceHelperTest extends TestCase {
     /**
      * @dataProvider totalPriceTier
      */
+    // code for testing this function: php artisan test --filter testTotalPriceTier
     public function testTotalPriceTier($qty, $expected) : void {
         $this->assertSame($expected, PriceHelper::getTotalPriceTierAtQty($qty, $this->priceTier));
     }
@@ -40,6 +40,7 @@ class PriceHelperTest extends TestCase {
     /**
      * @dataProvider qtyAndPrice
      */
+    // code for testing this function: php artisan test --filter testPriceAtEachQty
     public function testPriceAtEachQty($qty, $expected) : void {
         $this->assertSame($expected, PriceHelper::getPriceAtEachQty($qty, $this->priceTier, false));
     }
@@ -47,6 +48,7 @@ class PriceHelperTest extends TestCase {
     /**
      * @dataProvider qtyAndPriceCumulative
      */
+    // code for testing this function: php artisan test --filter testPriceAtEachQtyCumulative
     public function testPriceAtEachQtyCumulative($qty, $expected) : void {
         $this->assertSame($expected, PriceHelper::getPriceAtEachQty($qty, $this->priceTier, true));
     }
