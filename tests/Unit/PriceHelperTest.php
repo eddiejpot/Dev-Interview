@@ -6,7 +6,6 @@ use App\Classes\PriceHelper;
 use PHPUnit\Framework\TestCase;
 
 class PriceHelperTest extends TestCase {
-
     private array $priceTier;
 
     public function __construct(?string $name = null, array $data = [], $dataName = '') {
@@ -16,7 +15,7 @@ class PriceHelperTest extends TestCase {
             0      => 1.5,
             // 0 - 10,000 qty => $1.5
             10001  => 1,
-            // 10,000 - 100,000 qty => $1
+            // 10,001 - 100,000 qty => $1
             100001 => 0.5,
             // 100,001 & more => $0.5
         ];
@@ -25,6 +24,8 @@ class PriceHelperTest extends TestCase {
     /**
      * @dataProvider unitPriceTier
      */
+    // command to run to test this 
+    // code for testing this function: php artisan test --filter testUnitPriceTier
     public function testUnitPriceTier($qty, $expected) : void {
         $this->assertSame($expected, PriceHelper::getUnitPriceTierAtQty($qty, $this->priceTier));
     }
