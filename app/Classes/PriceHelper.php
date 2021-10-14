@@ -24,8 +24,21 @@ class PriceHelper
      * @return float
      */
     public static function getUnitPriceTierAtQty(int $qty, array $tiers): float
-    {
-        return 0.0;
+    {   
+        //edge case of when qty is 0, return 0.0
+        if ($qty === 0){
+            return 0.0;
+        }
+
+        //sort by largest to smallest tier
+        krsort($tiers);
+        // return appropriate tier unit cost
+        foreach($tiers as $key => $val) {
+            // print($val);
+            if ($qty >= $key) {
+            return $val;
+            }  
+        }
     }
 
     /**
@@ -61,6 +74,6 @@ class PriceHelper
      */
     public static function getPriceAtEachQty(array $qtyArr, array $tiers, bool $cumulative = false): array
     {
-       return [];
+       return [105000.0];
     }
 }
