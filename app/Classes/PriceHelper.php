@@ -5,10 +5,6 @@ namespace App\Classes;
 class PriceHelper
 {
     /*
-     * This variable is used to keep track of the cumulative purchases
-     */
-    public static $cumulativeQty= 0;
-    /*
      * Todo: Coding Test for Technical Hires
      * Please read the instructions on the README.md
      * Your task is to write the functions for the PriceHelper class
@@ -34,8 +30,8 @@ class PriceHelper
             return 0.0;
         }
 
-        //assume that $tiers is sorted ascending
-        //resort largest to smallest tier
+        //assume that $tiers input is sorted in ascending order
+        //sort from largest to smallest tier
         krsort($tiers);
         // return appropriate tier unit cost
         foreach($tiers as $key => $val) {
@@ -58,85 +54,58 @@ class PriceHelper
      * @param array $tiers
      * @return float
      */
-    public static function getTotalPriceTierAtQty(int $qty, array $tiers, $isCumulative = False): float
+    public static function getTotalPriceTierAtQty(int $qty, array $tiers): float
     {
-        // For NON-CUMULATIVE monthly purchases it will reset to 0
-        // For CUMULATIVE monthly purchases it will NOT reset to 0
-        if ($isCumulative == False){
-            self::$cumulativeQty = 0;
-        }
+        // We assume that $tiers input is sorted in ascending order
 
-        //edge case of when qty is 0, return 0.0
-        if ($qty === 0){
+        //edge case of when qty is less than 0, return 0.0
+        if ($qty <= 0){
             return 0.0;
         }
 
-        //assume that $tiers is sorted ascending
         $tierUnitPrices = array_values($tiers);
         $tierMinOrderQty = array_keys($tiers);
         $numOfTiers = count($tiers);
-        
-        //index 0 represents first tier
-        $totalSumOfPurchasesArray = [];
+
+        $totalSum = 0;
         $qtyBoughtSoFar = 0;
-        $remainingQtyToBuy = $qty;
-        
-        // Loop through each tier and determin how much to buy
+
         for ($i = 0; $i < $numOfTiers; $i++) {
-            
-            //exit condition 
+
+            //exit condition once there is nothing left to buy
             if ($qtyBoughtSoFar >= $qty){
                 break;
             }
-            
-            // print("tier${i}-> qtyBoughtSoFar: ${qtyBoughtSoFar} , remainingQtyToBuy: ${remainingQtyToBuy} , cumulativeQty: ${self::cumulativeQty}") . PHP_EOL;
+
+            $remainingQtyToBuy = $qty - $qtyBoughtSoFar;
             $currentTierUnitPrice = $tierUnitPrices[$i];
-            
+
             //final tier
+            // in the final tier the user will buy the remainder at the current tier's price and exit loop
             if ($i == $numOfTiers-1){
-                // print("buying last...") . PHP_EOL;
-                array_push($totalSumOfPurchasesArray, $remainingQtyToBuy * $currentTierUnitPrice);
-                $qtyBoughtSoFar += $remainingQtyToBuy;
-                $remainingQtyToBuy = $qty - $qtyBoughtSoFar;
-                self::$cumulativeQty += $qtyBoughtSoFar;
-                // print("qtyBoughtSoFar: ${qtyBoughtSoFar} , remainingQtyToBuy: ${remainingQtyToBuy} , cumulativeQty: ${self::cumulativeQty}") . PHP_EOL;
+                $totalSum += $remainingQtyToBuy * $currentTierUnitPrice;
                 break;
             }
-            
-            // current tier
-            $currentTierMinOrderQty = max(0,$tierMinOrderQty[$i] - 1);
-            $currentTierMaxOrderQty = $tierMinOrderQty[$i+1] - 1;
-            // print("tier${i}->  min: ${currentTierMinOrderQty} , max: ${currentTierMaxOrderQty}") . PHP_EOL;
 
-            
-            if (self::$cumulativeQty < $currentTierMaxOrderQty) {
-                // print("buying...") . PHP_EOL;
-                $buyMaxQty = $currentTierMaxOrderQty - self::$cumulativeQty;
-                // print ("check -> remainingQtyToBuy: ${remainingQtyToBuy} , buyMaxQty: ${buyMaxQty}") . PHP_EOL;
-                if ($remainingQtyToBuy >= $buyMaxQty){
-                    array_push($totalSumOfPurchasesArray, $buyMaxQty * $currentTierUnitPrice);
-                    $qtyBoughtSoFar += $buyMaxQty;
-                    self::$cumulativeQty += $buyMaxQty;
-                }
-                else {
-                    array_push($totalSumOfPurchasesArray, $remainingQtyToBuy * $currentTierUnitPrice);
-                    $qtyBoughtSoFar += $remainingQtyToBuy;
-                    self::$cumulativeQty += $remainingQtyToBuy;
-                }
-                
+            // current tier
+            $currentTierMinOrderQty = $tierMinOrderQty[$i+1] - 1;
+            $qtyToBuy = $currentTierMinOrderQty-$qtyBoughtSoFar;
+
+            // buy the max quantity that the user is allowed to buy at current tier's price
+            if ($remainingQtyToBuy > $qtyToBuy) {
+                $totalSum +=  $qtyToBuy * $currentTierUnitPrice;
+                $qtyBoughtSoFar += $qtyToBuy;
             }   
-            
-            $remainingQtyToBuy = $qty - $qtyBoughtSoFar;
-            // print("qtyBoughtSoFar: ${qtyBoughtSoFar} , remainingQtyToBuy: ${remainingQtyToBuy} , cumulativeQty: ${self::cumulativeQty}") . PHP_EOL;
-            
+
+            // else buy the remaining quantity at current tier's price
+            else {
+                $totalSum += $remainingQtyToBuy * $currentTierUnitPrice;
+                $qtyBoughtSoFar += $remainingQtyToBuy;
+            }
+
         }
-        
-        $totalSumOfPurchases = floatval(array_sum($totalSumOfPurchasesArray));
-        // print("End of calculation: ====>") . PHP_EOL;
-        // print_r($totalSumOfPurchasesArray) . PHP_EOL;
-        // print ($totalSumOfPurchases) . PHP_EOL;
-        return $totalSumOfPurchases;
-        
+
+        return floatval($totalSum);        
     }
 
     /**
@@ -155,30 +124,101 @@ class PriceHelper
      */
     public static function getPriceAtEachQty(array $qtyArr, array $tiers, bool $cumulative = false): array
     {
-        self::$cumulativeQty = 0;
+        // We assume that $tiers input is sorted in ascending order
 
-        // Cumulative calculation
+        // Case where user IS on the special pricing tier
         if ($cumulative){
+            
+            $tierUnitPrices = array_values($tiers);
+            $tierMinOrderQty = array_keys($tiers);
+            $numOfTiers = count($tiers);
+            $cumulativeQty = 0; 
+            $cumulativePricePlanResult = [];
+            
+            // Loop through the order quantities month by month
+            foreach ($qtyArr as $currentMonthQty) {
 
-            $cumulativeResult = [];
+                //edge case for when current month's qty is less than 0, append 0.0
+                if ($currentMonthQty <= 0 ){
+                    array_push($cumulativePricePlanResult, 0.0);
+                    continue;
+                }
+                
+                $totalBillForTheMonth = 0; 
+                $qtyBoughtSoFar = 0;
+                $remainingQtyToBuy = $currentMonthQty;
+                
+                // Loop through each tier and determin quantity to buy at each tier
+                for ($i = 0; $i < $numOfTiers; $i++) {
+                    // print("tier${i}-> qtyBoughtSoFar: ${qtyBoughtSoFar} , remainingQtyToBuy: ${remainingQtyToBuy} , cumulativeQty: ${cumulativeQty}") . PHP_EOL;
 
-            foreach ($qtyArr as $qty) {
-                array_push($cumulativeResult, self::getTotalPriceTierAtQty($qty, $tiers, True));
+                    //exit condition once there is nothing left to buy
+                    if ($qtyBoughtSoFar >= $currentMonthQty){
+                        break;
+                    }
+                            
+                    $currentTierUnitPrice = $tierUnitPrices[$i];
+        
+                    // final tier
+                    // in the final tier the user will buy the remainder at the current tier's price and exit loop
+                    if ($i == $numOfTiers-1){
+                        $totalBillForTheMonth += $remainingQtyToBuy * $currentTierUnitPrice;
+                        $qtyBoughtSoFar += $remainingQtyToBuy;
+                        $remainingQtyToBuy = $currentMonthQty - $qtyBoughtSoFar;
+                        $cumulativeQty += $qtyBoughtSoFar;
+                        // print("qtyBoughtSoFar: ${qtyBoughtSoFar} , remainingQtyToBuy: ${remainingQtyToBuy} , cumulativeQty: ${cumulativeQty}") . PHP_EOL;
+                        break;
+                    }
+                    
+                    // current tier
+                    $currentTierMinOrderQty = max(0,$tierMinOrderQty[$i] - 1);
+                    $currentTierMaxOrderQty = $tierMinOrderQty[$i+1] - 1;
+                    // print("tier${i}->  min: ${currentTierMinOrderQty} , max: ${currentTierMaxOrderQty}") . PHP_EOL;
+
+                    // if cumulative quantity is less than current max order qty then move on to the next tier
+                    if ($cumulativeQty < $currentTierMaxOrderQty) {
+                        // set the max quantity that the user is allowed to buy at the current tiers price
+                        $maxQtyAllowedAtCurrentTiersPrice = $currentTierMaxOrderQty - $cumulativeQty;
+        
+                        // buy the max quantity that the user is allowed to buy at current tier's price
+                        if ($remainingQtyToBuy >= $maxQtyAllowedAtCurrentTiersPrice){
+                            $totalBillForTheMonth += $maxQtyAllowedAtCurrentTiersPrice * $currentTierUnitPrice;
+                            $qtyBoughtSoFar += $maxQtyAllowedAtCurrentTiersPrice;
+                            $cumulativeQty += $maxQtyAllowedAtCurrentTiersPrice;
+                        }
+
+                        // else buy the remaining quantity at current tier's price
+                        else {
+                            $totalBillForTheMonth += $remainingQtyToBuy * $currentTierUnitPrice;
+                            $qtyBoughtSoFar += $remainingQtyToBuy;
+                            $cumulativeQty += $remainingQtyToBuy;
+                        }
+                        
+                    }   
+                    
+                    $remainingQtyToBuy = $currentMonthQty - $qtyBoughtSoFar;
+                    // print("qtyBoughtSoFar: ${qtyBoughtSoFar} , remainingQtyToBuy: ${remainingQtyToBuy} , cumulativeQty: ${cumulativeQty}") . PHP_EOL;
+
+                }
+
+                array_push($cumulativePricePlanResult, floatval($totalBillForTheMonth));
+
             }
 
-            return $cumulativeResult;
+            return $cumulativePricePlanResult;  
         }
+        
+        // Case where user is NOT the special pricing tier
+        else {
 
-        // Non-cumulative calculation
-        // note to self: consider using the map function here when you refactor
+            $nonCumulativePricePlanResult = [];
 
-        $nonCumulativeResult = [];
-    
-        foreach ($qtyArr as $qty) {
-            array_push($nonCumulativeResult, self::getTotalPriceTierAtQty($qty, $tiers));
+            // Loop through the order quantities month by month
+            foreach ($qtyArr as $currentMonthQty) {
+                array_push($nonCumulativePricePlanResult, self::getTotalPriceTierAtQty($currentMonthQty,$tiers));
+            }
+
+            return $nonCumulativePricePlanResult;
         }
-
-        return $nonCumulativeResult;
-
     }
 }
